@@ -1,6 +1,9 @@
 const dgram = require('node:dgram');
 const crypto = require('crypto');
 
+const UDP_PORT = 4242;
+const UDP_MULTICAST = "239.224.1.2";
+
 // Variable definition
 let instrument_sound;
 let client;
@@ -34,7 +37,7 @@ function start() {
 
    client = dgram.createSocket('udp4');
 
-   client.connect(4242, '239.224.1.2', (err) => {
+   client.connect(UDP_PORT, UDP_MULTICAST, (err) => {
       setInterval(play, 1000);
    });
 

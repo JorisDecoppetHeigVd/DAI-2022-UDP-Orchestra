@@ -1,6 +1,10 @@
 const dgram = require('node:dgram');
 const net = require('node:net');
 
+const TCP_PORT = 2205;
+const UDP_PORT = 4242;
+const UDP_MULTICAST = "239.224.1.2";
+
 const udpServer = dgram.createSocket('udp4');
 const musicians = new Map();
 
@@ -23,7 +27,6 @@ udpServer.on('error', (err) => {
 });
 
 udpServer.on('message', (msg, rinfo) => {
-   console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
 
    let msg_split = msg.toString().split(" ");
    let uuid = msg_split[0];
@@ -43,9 +46,9 @@ udpServer.on('listening', () => {
    console.log(`server listening ${address.address}:${address.port}`);
 });
 
-udpServer.bind(4242, () => {
-   udpServer.addMembership("239.224.1.2");
-});
+udpServer.bind(UDP_PORT, () => {
+   udpServer.addMembership(UDP_MULTICAST);
+}); 
 
 //------
 
@@ -59,10 +62,16 @@ const tcpServer = net.createServer((c) => {
          musicians.delete(uuid);
    }
 
+   let jsonMusicians = [];
    
-   console.log(JSON.stringify(musicians));
+   for (let [uuid, musician] of musicians) {
+      jsonMusicians.push({ uuid: uuid, instrument: musician.instrument, activeSince: new Date(musician.activeSince).toISOString() });
+   }
 
-   c.write(JSON.stringify(musicians));
+   jsonMusicians = JSON.stringify(jsonMusicians);
+   
+   c.write(jsonMusicians);
+   c.end();
 });
 
 tcpServer.on('end', () => {
@@ -71,8 +80,6 @@ tcpServer.on('end', () => {
 tcpServer.on('error', (err) => {
    console.log('Serveur tcp erreur : ' + err);
 });
-tcpServer.listen(2205, () => {
+tcpServer.listen(TCP_PORT, () => {
    console.log('server bound');
 });
-
-
